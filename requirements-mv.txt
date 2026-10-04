@@ -1,6 +1,0 @@
-streamlit
-pandas
-urllib.parse
-os
-openpyxl
-plaintext
