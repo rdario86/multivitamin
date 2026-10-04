@@ -110,7 +110,6 @@ else:
             prod_nombre = row.get("Producto", df.iloc[index, 0])
             prod_marca = row.get("Marca", "Sin marca")
             
-            # CORRECCIÓN: Buscamos la columna 'Presentación' y 'Duración'
             prod_presentacion = row.get("Presentación", row.get("Presentacion", "---"))
             prod_duracion = row.get("Duración", row.get("Duracion", "---"))
             
@@ -135,7 +134,6 @@ else:
             with col_info:
                 st.subheader(prod_nombre)
                 
-                # MODIFICACIÓN: Añadimos Presentación y Duración exactamente como vienen de la BD
                 linea_detalles = f"🏷️ **Marca:** {prod_marca} | 💊 **Presentación:** {prod_presentacion} | ⏳ **Duración:** {prod_duracion}"
                 
                 if pd.notna(prod_tratamiento) and str(prod_tratamiento).strip() != "":
@@ -144,12 +142,11 @@ else:
                 
                 st.caption(linea_detalles)
                 
-                # Sección de beneficios abajo
                 st.markdown("**Propiedades:**")
                 propiedades_limpias = str(prod_propiedades).replace(".- ", "* ")
                 st.markdown(propiedades_limpias)
                 
-            # --- Columna 3: Precio y Agregar al Carrito ---
+            # --- Columna 3: Precio y Agregar al Carrito (MODIFICADA CON STOCK) ---
             with col_accion:
                 st.write("### ") 
                 st.metric(label="Precio", value=f"${prod_precio}.00")
@@ -157,15 +154,40 @@ else:
                 
                 id_unico_producto = f"{prod_nombre}_{prod_marca}"
                 
-                if st.button("Agregar al Carrito 🛒", key=f"add_{index}", use_container_width=True):
-                    if id_unico_producto in st.session_state.carrito:
-                        st.session_state.carrito[id_unico_producto]["cantidad"] += 1
-                    else:
-                        st.session_state.carrito[id_unico_producto] = {
-                            "producto": prod_nombre,
-                            "marca": prod_marca,
-                            "precio": prod_precio,
-                            "cantidad": 1
-                        }
-                    st.toast(f"✅ ¡{prod_nombre} añadido al carrito!")
-                    st.rerun()
+                # 1. Extraemos el stock del Excel (si la celda está vacía, asume 0)
+                try:
+                    prod_stock = int(row.get("Stock", 0))
+                except:
+                    prod_stock = 0
+                
+                # 2. Calculamos cuántos de este producto ya están en el carrito de este cliente
+                cantidad_en_carrito = 0
+                if id_unico_producto in st.session_state.carrito:
+                    cantidad_en_carrito = st.session_state.carrito[id_unico_producto]["cantidad"]
+                
+                # 3. Restamos para saber cuántos quedan realmente disponibles para agregar
+                disponible = prod_stock - cantidad_en_carrito
+                
+                # 4. Mostramos visualmente el inventario
+                if prod_stock > 0:
+                    st.write(f"📦 **Disponibles: {disponible}**")
+                else:
+                    st.write("📦 **Agotado**")
+                
+                # 5. Condicionamos el botón: Si hay disponibles, deja agregar. Si no, se bloquea.
+                if disponible > 0:
+                    if st.button("Agregar al Carrito 🛒", key=f"add_{index}", use_container_width=True):
+                        if id_unico_producto in st.session_state.carrito:
+                            st.session_state.carrito[id_unico_producto]["cantidad"] += 1
+                        else:
+                            st.session_state.carrito[id_unico_producto] = {
+                                "producto": prod_nombre,
+                                "marca": prod_marca,
+                                "precio": prod_precio,
+                                "cantidad": 1
+                            }
+                        st.toast(f"✅ ¡{prod_nombre} añadido al carrito!")
+                        st.rerun()
+                else:
+                    # Botón deshabilitado para evitar que compren de más
+                    st.button("Sin Stock 🚫", key=f"add_{index}", disabled=True, use_container_width=True)
