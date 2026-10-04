@@ -14,7 +14,7 @@ if "carrito" not in st.session_state:
 def cargar_datos():
     # Usar la ruta absoluta garantiza que lo encuentre sin importar desde dónde ejecutes la app
     ruta_actual = os.path.dirname(os.path.abspath(__file__))
-    ruta_excel = os.path.join(ruta_actual, "BD.xlsx")
+    ruta_excel = os.path.join(ruta_actual, "bd.xlsx")
     
     return pd.read_excel(ruta_excel, sheet_name="SHOWROOM")
 
