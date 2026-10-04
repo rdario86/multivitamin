@@ -12,12 +12,17 @@ if "carrito" not in st.session_state:
 
 # 2. Cargar los datos desde tu archivo Excel
 def cargar_datos():
-    return pd.read_excel("BD.xlsx", sheet_name="SHOWROOM")
+    # Usar la ruta absoluta garantiza que lo encuentre sin importar desde dónde ejecutes la app
+    ruta_actual = os.path.dirname(os.path.abspath(__file__))
+    ruta_excel = os.path.join(ruta_actual, "BD.xlsx")
+    
+    return pd.read_excel(ruta_excel, sheet_name="SHOWROOM")
 
 try:
     df = cargar_datos()
 except Exception as e:
-    st.error(f"❌ No se pudo cargar el archivo 'BD.xlsx'. Asegúrate de que esté en la misma carpeta que este script.")
+    st.error("❌ No se pudo cargar el archivo 'BD.xlsx'.")
+    st.error(f"🔍 Detalle técnico del error: {e}") # <- Esto te dirá exactamente qué pasa
     st.stop()
 
 # Número de WhatsApp configurado para Suplementos R&A
